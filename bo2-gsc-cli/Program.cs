@@ -1,6 +1,8 @@
 ﻿using CommandLine;
 using Newtonsoft.Json;
 using PS3Lib;
+using BO2GSCCompiler;
+using Irony.Parsing;
 using System;
 using System.Data;
 using System.IO;
@@ -9,12 +11,6 @@ namespace bo2_gsc_cli {
     enum Gametype {
         MP,
         ZM
-    }
-
-    enum PathType {
-        File,
-        Directory,
-        String
     }
 
     class Program {
@@ -26,7 +22,7 @@ namespace bo2_gsc_cli {
                 Parse the command line parameters.
                 Conflicting commands shouldn't be allowed due to their configured exclusivity in the ParameterOptions class.
             */
-            Parser.Default.ParseArguments<ParameterOptions>(args).WithParsed(o => {
+            CommandLine.Parser.Default.ParseArguments<ParameterOptions>(args).WithParsed(o => {
                 // Validate selected PS3 API 
                 SelectAPI selectedAPI = ValidateAPISelection(o.SelectedPS3API);
                 // Validate selected gametype for resetting the ScriptParseTree and injection 
@@ -54,19 +50,16 @@ namespace bo2_gsc_cli {
                 if(!string.IsNullOrEmpty(o.SyntaxCheckPath)) {
                     ConsoleWriteInfo("Checking syntax...");
 
+                    // Create GSC grammar and parser objects 
+                    Grammar grammar = new GSCGrammar();
+                    Irony.Parsing.Parser parser = new Irony.Parsing.Parser(grammar);
+
                     // Determine path type to syntax check 
-                    PathType pathType = ValidatePathType(o.SyntaxCheckPath);
-                    switch(pathType) {
-                        default:
-                        case PathType.File:
-                            // TODO 
-                            break;
-                        case PathType.Directory:
-                            // TODO 
-                            break;
-                        case PathType.String:
-                            // TODO 
-                            break;
+                    if (Directory.Exists(o.CompilePath)) { // Path is a directory 
+
+                    }
+                    else { // Path is a file 
+
                     }
 
                     return;
@@ -76,19 +69,16 @@ namespace bo2_gsc_cli {
                 if(!string.IsNullOrEmpty(o.CompilePath)) {
                     ConsoleWriteInfo("Compiling...");
 
+                    // Create GSC grammar and parser objects 
+                    Grammar grammar = new GSCGrammar();
+                    Irony.Parsing.Parser parser = new Irony.Parsing.Parser(grammar);
+
                     // Determine path type to compile 
-                    PathType pathType = ValidatePathType(o.CompilePath);
-                    switch (pathType) {
-                        default:
-                        case PathType.File:
-                            // TODO 
-                            break;
-                        case PathType.Directory:
-                            // TODO 
-                            break;
-                        case PathType.String:
-                            // TODO 
-                            break;
+                    if(Directory.Exists(o.CompilePath)) { // Path is a directory 
+
+                    }
+                    else { // Path is a file 
+
                     }
 
                     return;
@@ -193,17 +183,6 @@ namespace bo2_gsc_cli {
 
                 return new_config;
             }
-        }
-
-        static PathType ValidatePathType(string path) {
-            if(File.Exists(path)) { // Path is a file 
-                return PathType.File;
-            }
-            else if(Directory.Exists(path)) { // Path is a directory 
-                return PathType.Directory;
-            }
-
-            return PathType.String; // Path is a raw string 
         }
 
         static Gametype ValidateGametypeSelection(string gametype) {
