@@ -71,8 +71,9 @@ namespace bo2_gsc_cli {
 
                 // Parse Syntax check parameter 
                 if(!string.IsNullOrEmpty(o.SyntaxCheckPath)) {
-                    Console.WriteLine("Syntax checking...");
+                    Console.WriteLine("[INFO] Syntax checking...");
 
+                    // Determine path type to syntax check 
                     PathType pathType = ValidatePathType(o.SyntaxCheckPath);
                     switch(pathType) {
                         default:
@@ -92,8 +93,9 @@ namespace bo2_gsc_cli {
 
                 // Parse Compile parameter 
                 if(!string.IsNullOrEmpty(o.CompilePath)) {
-                    Console.WriteLine("Compiling...");
+                    Console.WriteLine("[INFO] Compiling...");
 
+                    // Determine path type to compile 
                     PathType pathType = ValidatePathType(o.CompilePath);
                     switch (pathType) {
                         default:
@@ -113,7 +115,7 @@ namespace bo2_gsc_cli {
 
                 // Parse Injection parameter 
                 if(!string.IsNullOrEmpty(o.InjectPath)) {
-                    Console.WriteLine("Injecting...");
+                    Console.WriteLine("[INFO] Injecting...");
 
                     // Buffer to be injected is a compiled .gsc file 
                     if (o.InjectCompiledScript) {
