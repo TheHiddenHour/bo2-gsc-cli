@@ -17,13 +17,6 @@ namespace bo2_gsc_cli {
         String
     }
 
-    enum PS3ConnectionState {
-        ConnectFailed,
-        Attached,
-        AttachFailed,
-        ExceptionError
-    }
-
     class Program {
         static void Main(string[] args) {
             // Parse configuration JSON file 
@@ -41,37 +34,25 @@ namespace bo2_gsc_cli {
 
                 // Parse Reset ScriptParseTree parameter 
                 if (o.ResetScriptParseTree) {
-                    Console.WriteLine("[INFO] Resetting ScriptParseTree...");
+                    ConsoleWriteInfo("Resetting ScriptParseTree");
 
                     // Connect and attach to PS3 
                     PS3API PS3 = new PS3API(selectedAPI);
-                    PS3ConnectionState connectionState = ConnectAndAttachPS3(PS3);
-                    switch (connectionState) {
-                        default:
-                        case PS3ConnectionState.ConnectFailed:
-                            Console.WriteLine("[ERROR] Could not connect to target");
-                            return;
-                        case PS3ConnectionState.AttachFailed:
-                            Console.WriteLine("[ERROR] Could not attach to process");
-                            return;
-                        case PS3ConnectionState.ExceptionError:
-                            Console.WriteLine("[ERROR] An exception occurred trying to connect to the target");
-                            return;
-                        case PS3ConnectionState.Attached:
-                            Console.WriteLine("[SUCCESS] Connected and attached to " + PS3.GetConsoleName());
-                            break;
+                    bool connectedAndAttached = ConnectAndAttachPS3(PS3);
+                    if(!connectedAndAttached) { // If target could not connect or process could not attach 
+                        return;
                     }
 
                     // Reset script pointer in ScriptParseTree for selected gametype 
                     ResetScriptParseTree(PS3, selectedGametype, config);
-                    Console.WriteLine("[INFO] ScriptParseTree reset");
+                    ConsoleWriteSuccess("ScriptParseTree reset");
 
                     return;
                 }
 
                 // Parse Syntax check parameter 
                 if(!string.IsNullOrEmpty(o.SyntaxCheckPath)) {
-                    Console.WriteLine("[INFO] Syntax checking...");
+                    ConsoleWriteInfo("Checking syntax...");
 
                     // Determine path type to syntax check 
                     PathType pathType = ValidatePathType(o.SyntaxCheckPath);
@@ -93,7 +74,7 @@ namespace bo2_gsc_cli {
 
                 // Parse Compile parameter 
                 if(!string.IsNullOrEmpty(o.CompilePath)) {
-                    Console.WriteLine("[INFO] Compiling...");
+                    ConsoleWriteInfo("Compiling...");
 
                     // Determine path type to compile 
                     PathType pathType = ValidatePathType(o.CompilePath);
@@ -115,7 +96,14 @@ namespace bo2_gsc_cli {
 
                 // Parse Injection parameter 
                 if(!string.IsNullOrEmpty(o.InjectPath)) {
-                    Console.WriteLine("[INFO] Injecting...");
+                    ConsoleWriteInfo("Injecting...");
+
+                    // Connect and attach to PS3 
+                    PS3API PS3 = new PS3API(selectedAPI);
+                    bool connectedAndAttached = ConnectAndAttachPS3(PS3);
+                    if (!connectedAndAttached) { // If target could not connect or process could not attach 
+                        return;
+                    }
 
                     // Buffer to be injected is a compiled .gsc file 
                     if (o.InjectCompiledScript) {
@@ -130,6 +118,24 @@ namespace bo2_gsc_cli {
             });
         }
 
+        static void ConsoleWriteError(string msg) {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("[ERROR] {0}", msg);
+            Console.ForegroundColor = ConsoleColor.White;
+        }
+
+        static void ConsoleWriteInfo(string msg) {
+            Console.ForegroundColor = ConsoleColor.Blue;
+            Console.WriteLine("[INFO] {0}", msg);
+            Console.ForegroundColor = ConsoleColor.White;
+        }
+
+        static void ConsoleWriteSuccess(string msg) {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("[SUCCESS] {0}", msg);
+            Console.ForegroundColor = ConsoleColor.White;
+        }
+
         static void ResetScriptParseTree(PS3API PS3, Gametype gametype, Configuration config) {
             switch (gametype) {
                 default:
@@ -142,22 +148,31 @@ namespace bo2_gsc_cli {
             }
         }
 
-        static PS3ConnectionState ConnectAndAttachPS3(PS3API PS3) {
+        static bool ConnectAndAttachPS3(PS3API PS3) {
             try {
                 if(PS3.ConnectTarget()) {
                     if(PS3.AttachProcess()) {
-                        return PS3ConnectionState.Attached;
+                        string msg = string.Format("[INFO] Connected and attached to {0}", PS3.GetConsoleName());
+                        ConsoleWriteInfo(msg);
+
+                        return true;
                     }
                     else {
-                        return PS3ConnectionState.AttachFailed;
+                        ConsoleWriteError("Could not attach to process");
+
+                        return false;
                     }
                 }
                 else {
-                    return PS3ConnectionState.ConnectFailed;
+                    ConsoleWriteError("Could not connect to target");
+
+                    return false;
                 }
             }
             catch {
-                return PS3ConnectionState.ExceptionError;
+                ConsoleWriteError("An exception occurred trying to connect to the target");
+
+                return false;
             }
         }
 
