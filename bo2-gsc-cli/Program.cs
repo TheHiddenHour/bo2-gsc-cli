@@ -185,17 +185,43 @@ namespace bo2_gsc_cli {
                         return;
                     }
 
-                    // Buffer to be injected is a compiled .gsc file 
-                    if (o.InjectCompiledScript) {
+                    if(Directory.Exists(o.InjectPath)) { // Path is directory 
                         // TODO 
                     }
+                    else if(File.Exists(o.InjectPath)) { // Path is file 
+                        if (o.InjectCompiledScript) { // File is already compiled 
+                            byte[] scriptBuffer = File.ReadAllBytes(o.InjectPath);
+                            InjectScript(PS3, selectedGametype, config, scriptBuffer);
+                        }
+                        else { // File is not compiled 
+                            // TODO 
+                        }
+                    }
                     else {
-                        // TODO 
+                        ConsoleWriteError("Path to file or directory not recognized");
+
+                        return;
                     }
 
                     return;
                 }
             });
+        }
+
+        static void InjectScript(PS3API PS3, Gametype gametype, Configuration config, byte[] script) {
+            switch(gametype) {
+                default:
+                case Gametype.MP:
+                    PS3.Extension.WriteUInt32(config.MP.Defaults.PointerAddress, config.MP.Customs.BufferAddress); // Write script pointer 
+                    PS3.Extension.WriteBytes(config.MP.Customs.BufferAddress, script); // Write script buffer 
+
+                    return;
+                case Gametype.ZM:
+                    PS3.Extension.WriteUInt32(config.ZM.Defaults.PointerAddress, config.ZM.Customs.BufferAddress); // Write script pointer 
+                    PS3.Extension.WriteBytes(config.ZM.Customs.BufferAddress, script); // Write script buffer 
+
+                    return;
+            }
         }
 
         static byte[] CompileScript(Gametype gametype, Configuration config, ParseTree tree) {
