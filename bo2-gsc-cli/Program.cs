@@ -6,6 +6,9 @@ using Irony.Parsing;
 using System;
 using System.Data;
 using System.IO;
+using Irony;
+using System.Collections.Generic;
+using System.Text;
 
 namespace bo2_gsc_cli {
     enum Gametype {
@@ -27,6 +30,9 @@ namespace bo2_gsc_cli {
                 SelectAPI selectedAPI = ValidateAPISelection(o.SelectedPS3API);
                 // Validate selected gametype for resetting the ScriptParseTree and injection 
                 Gametype selectedGametype = ValidateGametypeSelection(o.SelectedGametype);
+                // Create GSC grammar and parser objects 
+                Grammar grammar = new GSCGrammar();
+                Irony.Parsing.Parser parser = new Irony.Parsing.Parser(grammar);
 
                 // Parse Reset ScriptParseTree parameter 
                 if (o.ResetScriptParseTree) {
@@ -50,16 +56,47 @@ namespace bo2_gsc_cli {
                 if(!string.IsNullOrEmpty(o.SyntaxCheckPath)) {
                     ConsoleWriteInfo("Checking syntax...");
 
-                    // Create GSC grammar and parser objects 
-                    Grammar grammar = new GSCGrammar();
-                    Irony.Parsing.Parser parser = new Irony.Parsing.Parser(grammar);
-
                     // Determine path type to syntax check 
-                    if (Directory.Exists(o.CompilePath)) { // Path is a directory 
+                    if (Directory.Exists(o.SyntaxCheckPath)) { // Path is a directory 
+                        bool errorsFound = false;
+                        string[] files = Directory.GetFiles(o.SyntaxCheckPath, "*.gsc", SearchOption.AllDirectories);
 
+                        foreach(string file in files) { // Iterate over every script in the directory 
+                            string scriptText = File.ReadAllText(file);
+                            ParseTree scriptTree = parser.Parse(scriptText);
+
+                            if (scriptTree.ParserMessages.Count > 0) { // If the script had parsing errors 
+                                LogMessage parserMsg = scriptTree.ParserMessages[0];
+                                string msg = string.Format("Bad syntax at line {0} in {1}", parserMsg.Location.Line, file);
+                                ConsoleWriteError(msg);
+                                errorsFound = true;
+                            }
+                        }
+
+                        if(errorsFound) { // Prevent success message from printing 
+                            return;
+                        }
+
+                        ConsoleWriteSuccess("No syntax errors found");
                     }
-                    else { // Path is a file 
+                    else if(File.Exists(o.SyntaxCheckPath)) { // Path is a file 
+                        string scriptText = File.ReadAllText(o.SyntaxCheckPath);
+                        ParseTree scriptTree = parser.Parse(scriptText);
 
+                        if(scriptTree.ParserMessages.Count > 0) { // If the file had parsing errors 
+                            LogMessage parserMsg = scriptTree.ParserMessages[0];
+                            string msg = string.Format("Bad syntax at line {0} in {1}", parserMsg.Location.Line, o.SyntaxCheckPath);
+                            ConsoleWriteError(msg);
+
+                            return;
+                        }
+
+                        ConsoleWriteSuccess("No syntax errors found");
+                    }
+                    else { // Path is unrecognized 
+                        ConsoleWriteError("Path to file or directory not recognized");
+
+                        return;
                     }
 
                     return;
@@ -69,15 +106,14 @@ namespace bo2_gsc_cli {
                 if(!string.IsNullOrEmpty(o.CompilePath)) {
                     ConsoleWriteInfo("Compiling...");
 
-                    // Create GSC grammar and parser objects 
-                    Grammar grammar = new GSCGrammar();
-                    Irony.Parsing.Parser parser = new Irony.Parsing.Parser(grammar);
-
-                    // Determine path type to compile 
-                    if(Directory.Exists(o.CompilePath)) { // Path is a directory 
+                    // Determine path type to compile  
+                    if (Directory.Exists(o.CompilePath)) { // Path is a directory 
 
                     }
-                    else { // Path is a file 
+                    else if (File.Exists(o.CompilePath)) { // Path is a file 
+
+                    }
+                    else { // Path is unrecognized 
 
                     }
 
@@ -108,24 +144,33 @@ namespace bo2_gsc_cli {
             });
         }
 
-        static void ConsoleWriteError(string msg) {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("[ERROR] {0}", msg);
-            Console.ForegroundColor = ConsoleColor.White;
-        }
+        static string ConstructDirectoryScript(string path) {
+            // Create recursive list of files in directory 
+            List<string> files = new List<string>(Directory.GetFiles(path, "*.gsc", SearchOption.AllDirectories));
+            StringBuilder sb = new StringBuilder();
+            bool contains_main = false;
+            // Push main.gsc to the top of the list 
+            for(int i = 0; i < files.Count; i++) {
+                string filename = Path.GetFileName(files[i]);
+                string filetext = File.ReadAllText(files[i]);
 
-        static void ConsoleWriteInfo(string msg) {
-            Console.ForegroundColor = ConsoleColor.Blue;
-            Console.WriteLine("[INFO] {0}", msg);
-            Console.ForegroundColor = ConsoleColor.White;
-        }
+                if(filename == "main.gsc") {
+                    sb.Insert(0, filetext);
+                    contains_main = true;
+                    break;
+                }
+                else {
+                    sb.Append(filetext);
+                }
+            }
 
-        static void ConsoleWriteSuccess(string msg) {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("[SUCCESS] {0}", msg);
-            Console.ForegroundColor = ConsoleColor.White;
-        }
+            if(!contains_main) { // Return an empty string if the directory does not contain main.gsc in root 
+                return "";
+            }
 
+            return sb.ToString();
+        }
+        
         static void ResetScriptParseTree(PS3API PS3, Gametype gametype, Configuration config) {
             switch (gametype) {
                 default:
@@ -222,6 +267,23 @@ namespace bo2_gsc_cli {
                 case "ControlConsole":
                     return SelectAPI.ControlConsole;
             }
+        }
+        static void ConsoleWriteError(string msg) {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("[ERROR] {0}", msg);
+            Console.ForegroundColor = ConsoleColor.White;
+        }
+
+        static void ConsoleWriteInfo(string msg) {
+            Console.ForegroundColor = ConsoleColor.Blue;
+            Console.WriteLine("[INFO] {0}", msg);
+            Console.ForegroundColor = ConsoleColor.White;
+        }
+
+        static void ConsoleWriteSuccess(string msg) {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("[SUCCESS] {0}", msg);
+            Console.ForegroundColor = ConsoleColor.White;
         }
     }
 }
