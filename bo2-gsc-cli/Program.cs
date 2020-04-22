@@ -78,6 +78,8 @@ namespace bo2_gsc_cli {
                         }
 
                         ConsoleWriteSuccess("No syntax errors found");
+
+                        return;
                     }
                     else if(File.Exists(o.SyntaxCheckPath)) { // Path is a file 
                         string scriptText = File.ReadAllText(o.SyntaxCheckPath);
@@ -92,32 +94,84 @@ namespace bo2_gsc_cli {
                         }
 
                         ConsoleWriteSuccess("No syntax errors found");
+
+                        return;
                     }
                     else { // Path is unrecognized 
                         ConsoleWriteError("Path to file or directory not recognized");
 
                         return;
                     }
-
-                    return;
                 }
 
                 // Parse Compile parameter 
                 if(!string.IsNullOrEmpty(o.CompilePath)) {
-                    ConsoleWriteInfo("Compiling...");
-
                     // Determine path type to compile  
                     if (Directory.Exists(o.CompilePath)) { // Path is a directory 
+                        ConsoleWriteInfo("Compiling directory...");
 
+                        string[] files = Directory.GetFiles(o.CompilePath, "*.gsc", SearchOption.AllDirectories);
+                        StringBuilder directoryScript = new StringBuilder();
+                        ParseTree scriptTree;
+
+                        foreach (string file in files) { // Iterate over every script in the directory 
+                            string scriptName = Path.GetFileName(file);
+                            string scriptText = File.ReadAllText(file);
+                            scriptTree = parser.Parse(scriptText);
+
+                            if (scriptTree.ParserMessages.Count > 0) { // If the file had parsing errors 
+                                // Print errors and exit the loop 
+                                LogMessage parserMsg = scriptTree.ParserMessages[0];
+                                string msg = string.Format("Bad syntax at line {0} in {1}", parserMsg.Location.Line, o.SyntaxCheckPath);
+                                ConsoleWriteError(msg);
+
+                                return;
+                            }
+
+                            if(scriptName == "main.gsc") { // Add the contents of main.gsc to the top of the string 
+                                directoryScript.Insert(0, scriptText + '\n');
+                                continue;
+                            }
+                            directoryScript.Append(scriptText + '\n'); // Append any non-main.gsc text to the bottom like normal 
+                        }
+
+                        // Compile script buffer 
+                        scriptTree = parser.Parse(directoryScript.ToString());
+                        byte[] scriptBuffer = CompileScript(selectedGametype, config, scriptTree);
+                        string compiledPath = Path.Combine(o.CompilePath, "compiled.gsc");
+                        // Write script buffer to file 
+                        File.WriteAllBytes(compiledPath, scriptBuffer);
+                        ConsoleWriteSuccess("Compiled directory to " + compiledPath);
+
+                        return;
                     }
                     else if (File.Exists(o.CompilePath)) { // Path is a file 
+                        ConsoleWriteInfo("Compiling file...");
 
+                        string scriptText = File.ReadAllText(o.CompilePath);
+                        ParseTree scriptTree = parser.Parse(scriptText);
+
+                        if(scriptTree.ParserMessages.Count > 0) {
+                            LogMessage parserMsg = scriptTree.ParserMessages[0];
+                            string msg = string.Format("Bad syntax at line {0} in {1}", parserMsg.Location.Line, o.SyntaxCheckPath);
+                            ConsoleWriteError(msg);
+
+                            return;
+                        }
+
+                        string compiledPath = Path.Combine(Path.GetDirectoryName(o.CompilePath), "compiled.gsc");
+                        byte[] scriptBuffer = CompileScript(selectedGametype, config, scriptTree);
+                        // Write script buffer to file 
+                        File.WriteAllBytes(compiledPath, scriptBuffer);
+                        ConsoleWriteSuccess("Compiled file to " + compiledPath);
+
+                        return;
                     }
                     else { // Path is unrecognized 
+                        ConsoleWriteError("Path to file or directory not recognized");
 
+                        return;
                     }
-
-                    return;
                 }
 
                 // Parse Injection parameter 
@@ -144,31 +198,19 @@ namespace bo2_gsc_cli {
             });
         }
 
-        static string ConstructDirectoryScript(string path) {
-            // Create recursive list of files in directory 
-            List<string> files = new List<string>(Directory.GetFiles(path, "*.gsc", SearchOption.AllDirectories));
-            StringBuilder sb = new StringBuilder();
-            bool contains_main = false;
-            // Push main.gsc to the top of the list 
-            for(int i = 0; i < files.Count; i++) {
-                string filename = Path.GetFileName(files[i]);
-                string filetext = File.ReadAllText(files[i]);
+        static byte[] CompileScript(Gametype gametype, Configuration config, ParseTree tree) {
+            Compiler compiler;
+            switch(gametype) {
+                default:
+                case Gametype.MP:
+                    compiler = new Compiler(tree, config.MP.ScriptPath);
+                     
+                    return compiler.CompileScript();
+                case Gametype.ZM:
+                    compiler = new Compiler(tree, config.ZM.ScriptPath);
 
-                if(filename == "main.gsc") {
-                    sb.Insert(0, filetext);
-                    contains_main = true;
-                    break;
-                }
-                else {
-                    sb.Append(filetext);
-                }
+                    return compiler.CompileScript();
             }
-
-            if(!contains_main) { // Return an empty string if the directory does not contain main.gsc in root 
-                return "";
-            }
-
-            return sb.ToString();
         }
         
         static void ResetScriptParseTree(PS3API PS3, Gametype gametype, Configuration config) {
