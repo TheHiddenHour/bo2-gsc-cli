@@ -20,7 +20,8 @@ namespace bo2_gsc_cli {
     enum PS3ConnectionState {
         ConnectFailed,
         Attached,
-        AttachFailed
+        AttachFailed,
+        ExceptionError
     }
 
     class Program {
@@ -52,6 +53,9 @@ namespace bo2_gsc_cli {
                             return;
                         case PS3ConnectionState.AttachFailed:
                             Console.WriteLine("[ERROR] Could not attach to process");
+                            return;
+                        case PS3ConnectionState.ExceptionError:
+                            Console.WriteLine("[ERROR] An exception occurred trying to connect to the target");
                             return;
                         case PS3ConnectionState.Attached:
                             Console.WriteLine("[SUCCESS] Connected and attached to " + PS3.GetConsoleName());
@@ -151,7 +155,7 @@ namespace bo2_gsc_cli {
                 }
             }
             catch {
-                return PS3ConnectionState.ConnectFailed;
+                return PS3ConnectionState.ExceptionError;
             }
         }
 
