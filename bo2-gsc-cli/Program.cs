@@ -60,16 +60,16 @@ namespace bo2_gsc_cli {
                     // Determine path type to syntax check 
                     if (Directory.Exists(o.SyntaxCheckPath)) { // Path is a directory 
                         bool errorsFound = false;
-                        string[] files = Directory.GetFiles(o.SyntaxCheckPath, "*.gsc", SearchOption.AllDirectories);
+                        string[] scriptPaths = Directory.GetFiles(o.SyntaxCheckPath, "*.gsc", SearchOption.AllDirectories);
 
-                        foreach(string file in files) { // Iterate over every script in the directory 
-                            string scriptText = File.ReadAllText(file);
+                        foreach(string scriptPath in scriptPaths) { // Iterate over every script in the directory 
+                            string scriptText = File.ReadAllText(scriptPath);
                             ParseTree scriptTree = parser.Parse(scriptText);
 
                             if (scriptTree.ParserMessages.Count > 0) { // If the script had parsing errors 
                                 LogMessage parserMsg = scriptTree.ParserMessages[0];
-                                string msg = string.Format("Bad syntax at line {0} in {1}", parserMsg.Location.Line, file);
-                                ConsoleWriteError(msg);
+                                string consoleErrorMsg = string.Format("Bad syntax at line {0} in {1}", parserMsg.Location.Line, scriptPath);
+                                ConsoleWriteError(consoleErrorMsg);
                                 errorsFound = true;
                             }
                         }
@@ -88,8 +88,8 @@ namespace bo2_gsc_cli {
 
                         if(scriptTree.ParserMessages.Count > 0) { // If the file had parsing errors 
                             LogMessage parserMsg = scriptTree.ParserMessages[0];
-                            string msg = string.Format("Bad syntax at line {0} in {1}", parserMsg.Location.Line, o.SyntaxCheckPath);
-                            ConsoleWriteError(msg);
+                            string consoleMsg = string.Format("Bad syntax at line {0} in {1}", parserMsg.Location.Line, o.SyntaxCheckPath);
+                            ConsoleWriteError(consoleMsg);
 
                             return;
                         }
@@ -111,38 +111,38 @@ namespace bo2_gsc_cli {
                     if (Directory.Exists(o.CompilePath)) { // Path is a directory 
                         ConsoleWriteInfo("Compiling directory...");
 
-                        string[] files = Directory.GetFiles(o.CompilePath, "*.gsc", SearchOption.AllDirectories);
-                        StringBuilder directoryScript = new StringBuilder();
+                        string[] scriptPaths = Directory.GetFiles(o.CompilePath, "*.gsc", SearchOption.AllDirectories);
+                        StringBuilder dirScriptText = new StringBuilder();
                         ParseTree scriptTree;
 
-                        foreach (string file in files) { // Iterate over every script in the directory 
-                            string scriptName = Path.GetFileName(file);
-                            string scriptText = File.ReadAllText(file);
+                        foreach (string scriptPath in scriptPaths) { // Iterate over every script in the directory 
+                            string scriptName = Path.GetFileName(scriptPath);
+                            string scriptText = File.ReadAllText(scriptPath);
                             scriptTree = parser.Parse(scriptText);
 
                             if (scriptTree.ParserMessages.Count > 0) { // If the file had parsing errors 
                                 // Print errors and exit the loop 
                                 LogMessage parserMsg = scriptTree.ParserMessages[0];
-                                string msg = string.Format("Bad syntax at line {0} in {1}", parserMsg.Location.Line, o.SyntaxCheckPath);
-                                ConsoleWriteError(msg);
+                                string consoleErrorMsg = string.Format("Bad syntax at line {0} in {1}", parserMsg.Location.Line, o.SyntaxCheckPath);
+                                ConsoleWriteError(consoleErrorMsg);
 
                                 return;
                             }
 
                             if(scriptName == "main.gsc") { // Add the contents of main.gsc to the top of the string 
-                                directoryScript.Insert(0, scriptText + '\n');
+                                dirScriptText.Insert(0, scriptText + '\n');
                                 continue;
                             }
-                            directoryScript.Append(scriptText + '\n'); // Append any non-main.gsc text to the bottom like normal 
+                            dirScriptText.Append(scriptText + '\n'); // Append any non-main.gsc text to the bottom like normal 
                         }
 
                         // Compile script buffer 
-                        scriptTree = parser.Parse(directoryScript.ToString());
+                        scriptTree = parser.Parse(dirScriptText.ToString());
                         byte[] scriptBuffer = CompileScript(selectedGametype, config, scriptTree);
-                        string compiledPath = Path.Combine(o.CompilePath, "compiled.gsc");
+                        string compiledOutputPath = Path.Combine(o.CompilePath, "compiled.gsc");
                         // Write script buffer to file 
-                        File.WriteAllBytes(compiledPath, scriptBuffer);
-                        ConsoleWriteSuccess("Compiled directory to " + compiledPath);
+                        File.WriteAllBytes(compiledOutputPath, scriptBuffer);
+                        ConsoleWriteSuccess("Compiled directory to " + compiledOutputPath);
 
                         return;
                     }
@@ -154,17 +154,17 @@ namespace bo2_gsc_cli {
 
                         if(scriptTree.ParserMessages.Count > 0) {
                             LogMessage parserMsg = scriptTree.ParserMessages[0];
-                            string msg = string.Format("Bad syntax at line {0} in {1}", parserMsg.Location.Line, o.SyntaxCheckPath);
-                            ConsoleWriteError(msg);
+                            string consoleErrorMsg = string.Format("Bad syntax at line {0} in {1}", parserMsg.Location.Line, o.SyntaxCheckPath);
+                            ConsoleWriteError(consoleErrorMsg);
 
                             return;
                         }
 
-                        string compiledPath = Path.Combine(Path.GetDirectoryName(o.CompilePath), "compiled.gsc");
+                        string compiledOutputPath = Path.Combine(Path.GetDirectoryName(o.CompilePath), "compiled.gsc");
                         byte[] scriptBuffer = CompileScript(selectedGametype, config, scriptTree);
                         // Write script buffer to file 
-                        File.WriteAllBytes(compiledPath, scriptBuffer);
-                        ConsoleWriteSuccess("Compiled file to " + compiledPath);
+                        File.WriteAllBytes(compiledOutputPath, scriptBuffer);
+                        ConsoleWriteSuccess("Compiled file to " + compiledOutputPath);
 
                         return;
                     }
@@ -187,36 +187,36 @@ namespace bo2_gsc_cli {
                     }
 
                     if(Directory.Exists(o.InjectPath)) { // Path is directory 
-                        string[] files = Directory.GetFiles(o.InjectPath, "*.gsc", SearchOption.AllDirectories);
-                        StringBuilder sb = new StringBuilder();
+                        string[] scriptPaths = Directory.GetFiles(o.InjectPath, "*.gsc", SearchOption.AllDirectories);
+                        StringBuilder dirScriptText = new StringBuilder();
                         ParseTree scriptTree;
 
-                        foreach (string file in files) { // Iterate over every script in the directory 
-                            string scriptName = Path.GetFileName(file);
-                            string scriptText = File.ReadAllText(file);
-                            ParseTree _scriptTree = parser.Parse(scriptText);
+                        foreach (string scriptPath in scriptPaths) { // Iterate over every script in the directory 
+                            string scriptName = Path.GetFileName(scriptPath);
+                            string scriptText = File.ReadAllText(scriptPath);
+                            scriptTree = parser.Parse(scriptText);
 
-                            if (_scriptTree.ParserMessages.Count > 0) { // If the script had parsing errors 
-                                LogMessage parserMsg = _scriptTree.ParserMessages[0];
-                                string _msg = string.Format("Bad syntax at line {0} in {1}", parserMsg.Location.Line, file);
-                                ConsoleWriteError(_msg);
+                            if (scriptTree.ParserMessages.Count > 0) { // If the script had parsing errors 
+                                LogMessage parserMsg = scriptTree.ParserMessages[0];
+                                string consoleErrorMsg = string.Format("Bad syntax at line {0} in {1}", parserMsg.Location.Line, scriptPath);
+                                ConsoleWriteError(consoleErrorMsg);
 
                                 return;
                             }
 
                             if(scriptName == "main.gsc") {
-                                sb.Insert(0, scriptText);
+                                dirScriptText.Insert(0, scriptText);
                                 continue;
                             }
-                            sb.Append(scriptText);
+                            dirScriptText.Append(scriptText);
                         }
 
-                        scriptTree = parser.Parse(sb.ToString());
+                        scriptTree = parser.Parse(dirScriptText.ToString());
                         byte[] scriptBuffer = CompileScript(selectedGametype, config, scriptTree);
                         InjectScript(PS3, selectedGametype, config, scriptBuffer);
 
-                        string msg = string.Format("Directory injected ({0} bytes)", scriptBuffer.Length);
-                        ConsoleWriteSuccess(msg);
+                        string consoleSuccessMsg = string.Format("Directory injected ({0} bytes)", scriptBuffer.Length);
+                        ConsoleWriteSuccess(consoleSuccessMsg);
 
                         return;
                     }
@@ -225,8 +225,8 @@ namespace bo2_gsc_cli {
                             byte[] scriptBuffer = File.ReadAllBytes(o.InjectPath);
                             InjectScript(PS3, selectedGametype, config, scriptBuffer);
 
-                            string msg = string.Format("File injected ({0} bytes)", scriptBuffer.Length);
-                            ConsoleWriteSuccess(msg);
+                            string consoleSuccessMsg = string.Format("File injected ({0} bytes)", scriptBuffer.Length);
+                            ConsoleWriteSuccess(consoleSuccessMsg);
 
                             return;
                         }
@@ -236,8 +236,8 @@ namespace bo2_gsc_cli {
                             byte[] scriptBuffer = CompileScript(selectedGametype, config, scriptTree);
 
                             InjectScript(PS3, selectedGametype, config, scriptBuffer);
-                            string msg = string.Format("File injected ({0} bytes)", scriptBuffer.Length);
-                            ConsoleWriteSuccess(msg);
+                            string consoleSuccessMsg = string.Format("File injected ({0} bytes)", scriptBuffer.Length);
+                            ConsoleWriteSuccess(consoleSuccessMsg);
 
                             return;
                         }
