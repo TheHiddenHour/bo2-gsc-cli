@@ -186,12 +186,48 @@ namespace bo2_gsc_cli {
                     }
 
                     if(Directory.Exists(o.InjectPath)) { // Path is directory 
-                        // TODO 
+                        string[] files = Directory.GetFiles(o.SyntaxCheckPath, "*.gsc", SearchOption.AllDirectories);
+                        StringBuilder sb = new StringBuilder();
+                        ParseTree scriptTree;
+
+                        foreach (string file in files) { // Iterate over every script in the directory 
+                            string scriptName = Path.GetFileName(file);
+                            string scriptText = File.ReadAllText(file);
+                            ParseTree _scriptTree = parser.Parse(scriptText);
+
+                            if (_scriptTree.ParserMessages.Count > 0) { // If the script had parsing errors 
+                                LogMessage parserMsg = _scriptTree.ParserMessages[0];
+                                string _msg = string.Format("Bad syntax at line {0} in {1}", parserMsg.Location.Line, file);
+                                ConsoleWriteError(_msg);
+
+                                return;
+                            }
+
+                            if(scriptName == "main.gsc") {
+                                sb.Insert(0, scriptText);
+                                continue;
+                            }
+                            sb.Append(scriptText);
+                        }
+
+                        scriptTree = parser.Parse(sb.ToString());
+                        byte[] scriptBuffer = CompileScript(selectedGametype, config, scriptTree);
+                        InjectScript(PS3, selectedGametype, config, scriptBuffer);
+
+                        string msg = string.Format("Directory injected ({0} bytes)", scriptBuffer.Length);
+                        ConsoleWriteSuccess(msg);
+
+                        return;
                     }
                     else if(File.Exists(o.InjectPath)) { // Path is file 
                         if (o.InjectCompiledScript) { // File is already compiled 
                             byte[] scriptBuffer = File.ReadAllBytes(o.InjectPath);
                             InjectScript(PS3, selectedGametype, config, scriptBuffer);
+
+                            string msg = string.Format("File injected ({0} bytes)", scriptBuffer.Length);
+                            ConsoleWriteSuccess(msg);
+
+                            return;
                         }
                         else { // File is not compiled 
                             // TODO 
