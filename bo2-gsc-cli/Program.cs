@@ -9,6 +9,7 @@ using System.IO;
 using Irony;
 using System.Collections.Generic;
 using System.Text;
+using System.Runtime.CompilerServices;
 
 namespace bo2_gsc_cli {
     enum Gametype {
@@ -230,7 +231,15 @@ namespace bo2_gsc_cli {
                             return;
                         }
                         else { // File is not compiled 
-                            // TODO 
+                            string scriptText = File.ReadAllText(o.InjectPath);
+                            ParseTree scriptTree = parser.Parse(scriptText);
+                            byte[] scriptBuffer = CompileScript(selectedGametype, config, scriptTree);
+
+                            InjectScript(PS3, selectedGametype, config, scriptBuffer);
+                            string msg = string.Format("File injected ({0} bytes)", scriptBuffer.Length);
+                            ConsoleWriteSuccess(msg);
+
+                            return;
                         }
                     }
                     else {
