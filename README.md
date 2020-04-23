@@ -22,6 +22,7 @@ Call of Duty: Black Ops II GSC syntax checker, compiler, and injector for CFW-en
 `bo2-gsc-cli.exe -s /dir/to/script-dir/` :	Syntax check the contents of /script-dir/ 
 
 ## Compiling 
+* Compile a .gsc file or the contents of a directory containing main.gsc in it's root.
 * Scripts are compiled by default for multiplayer unless `-g, --gametype` is set to zombies.
 
 ### Usage Example 
@@ -30,6 +31,7 @@ Call of Duty: Black Ops II GSC syntax checker, compiler, and injector for CFW-en
 `bo2-gsc-cli.exe -g ZM -c /dir/to/script.gsc` :	Compile script.gsc to compiled.gsc for zombies  
 
 ## Injection
+* Inject a pre-compiled .gsc file, uncompiled .gsc file, or directory containing main.gsc in it's root.
 * Scripts are injected by default using Target Manager unless `-a, --api` is set to Control Console.
 * Script are compiled by default for multiplayer unless `-g, --gametype` is set to zombies.
 * `--compiled` can be used to inject a pre-compiled .gsc file. 
