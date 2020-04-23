@@ -187,7 +187,7 @@ namespace bo2_gsc_cli {
                     }
 
                     if(Directory.Exists(o.InjectPath)) { // Path is directory 
-                        string[] files = Directory.GetFiles(o.SyntaxCheckPath, "*.gsc", SearchOption.AllDirectories);
+                        string[] files = Directory.GetFiles(o.InjectPath, "*.gsc", SearchOption.AllDirectories);
                         StringBuilder sb = new StringBuilder();
                         ParseTree scriptTree;
 
@@ -247,8 +247,6 @@ namespace bo2_gsc_cli {
 
                         return;
                     }
-
-                    return;
                 }
             });
         }
@@ -300,7 +298,7 @@ namespace bo2_gsc_cli {
             try {
                 if(PS3.ConnectTarget()) {
                     if(PS3.AttachProcess()) {
-                        string msg = string.Format("[INFO] Connected and attached to {0}", PS3.GetConsoleName());
+                        string msg = string.Format("Connected and attached to {0}", PS3.GetConsoleName());
                         ConsoleWriteInfo(msg);
 
                         return true;
