@@ -48,7 +48,8 @@ namespace bo2_gsc_cli {
 
                     // Reset script pointer in ScriptParseTree for selected gametype 
                     ResetScriptParseTree(PS3, selectedGametype, config);
-                    ConsoleWriteSuccess("ScriptParseTree reset");
+                    string consoleSuccessMsg = string.Format("{0} ScriptParseTree reset", selectedGametype.ToString());
+                    ConsoleWriteSuccess(consoleSuccessMsg);
 
                     return;
                 }
@@ -117,7 +118,9 @@ namespace bo2_gsc_cli {
                         string compiledOutputPath = Path.Combine(o.CompilePath, "compiled.gsc");
                         // Write script buffer to file 
                         File.WriteAllBytes(compiledOutputPath, scriptBuffer);
-                        ConsoleWriteSuccess("Compiled directory to " + compiledOutputPath);
+
+                        string consoleSuccessMsg = string.Format("Compiled {0} directory to {1}", selectedGametype.ToString(), compiledOutputPath);
+                        ConsoleWriteSuccess(consoleSuccessMsg);
 
                         return;
                     }
@@ -136,7 +139,9 @@ namespace bo2_gsc_cli {
                         byte[] scriptBuffer = CompileScript(selectedGametype, config, scriptTree);
                         // Write script buffer to file 
                         File.WriteAllBytes(compiledOutputPath, scriptBuffer);
-                        ConsoleWriteSuccess("Compiled file to " + compiledOutputPath);
+
+                        string consoleSuccessMsg = string.Format("Compiled {0} file to {1}", selectedGametype.ToString(), compiledOutputPath);
+                        ConsoleWriteSuccess(consoleSuccessMsg);
 
                         return;
                     }
@@ -172,7 +177,7 @@ namespace bo2_gsc_cli {
                         byte[] scriptBuffer = CompileScript(selectedGametype, config, scriptTree);
                         InjectScript(PS3, selectedGametype, config, scriptBuffer);
 
-                        string consoleSuccessMsg = string.Format("Directory injected ({0} bytes)", scriptBuffer.Length);
+                        string consoleSuccessMsg = string.Format("{0} Directory injected ({1} bytes)", selectedGametype.ToString(), scriptBuffer.Length);
                         ConsoleWriteSuccess(consoleSuccessMsg);
 
                         return;
@@ -182,7 +187,7 @@ namespace bo2_gsc_cli {
                             byte[] scriptBuffer = File.ReadAllBytes(o.InjectPath);
                             InjectScript(PS3, selectedGametype, config, scriptBuffer);
 
-                            string consoleSuccessMsg = string.Format("File injected ({0} bytes)", scriptBuffer.Length);
+                            string consoleSuccessMsg = string.Format("{0} File injected ({1} bytes)", selectedGametype.ToString(), scriptBuffer.Length);
                             ConsoleWriteSuccess(consoleSuccessMsg);
 
                             return;
@@ -199,7 +204,7 @@ namespace bo2_gsc_cli {
                             byte[] scriptBuffer = CompileScript(selectedGametype, config, scriptTree);
 
                             InjectScript(PS3, selectedGametype, config, scriptBuffer);
-                            string consoleSuccessMsg = string.Format("File injected ({0} bytes)", scriptBuffer.Length);
+                            string consoleSuccessMsg = string.Format("{0} File injected ({1} bytes)", selectedGametype.ToString(), scriptBuffer.Length);
                             ConsoleWriteSuccess(consoleSuccessMsg);
 
                             return;
