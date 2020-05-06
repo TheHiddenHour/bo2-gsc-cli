@@ -4,12 +4,9 @@ using PS3Lib;
 using BO2GSCCompiler;
 using Irony.Parsing;
 using System;
-using System.Data;
 using System.IO;
 using Irony;
-using System.Collections.Generic;
 using System.Text;
-using System.Runtime.CompilerServices;
 
 namespace bo2_gsc_cli {
     enum Gametype {
