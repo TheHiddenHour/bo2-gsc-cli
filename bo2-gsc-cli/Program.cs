@@ -48,8 +48,8 @@ namespace bo2_gsc_cli {
 
                     // Reset script pointer in ScriptParseTree for selected gametype 
                     ResetScriptParseTree(PS3, selectedGametype, config);
-                    string consoleSuccessMsg = string.Format("{0} ScriptParseTree reset", selectedGametype.ToString());
-                    ConsoleWriteSuccess(consoleSuccessMsg);
+                    // string consoleSuccessMsg = string.Format("{0} ScriptParseTree reset", selectedGametype.ToString());
+                    ConsoleWriteSuccess("{0} ScriptParseTree reset", selectedGametype.ToString());
 
                     return;
                 }
@@ -119,8 +119,8 @@ namespace bo2_gsc_cli {
                         // Write script buffer to file 
                         File.WriteAllBytes(compiledOutputPath, scriptBuffer);
 
-                        string consoleSuccessMsg = string.Format("Compiled {0} directory to {1}", selectedGametype.ToString(), compiledOutputPath);
-                        ConsoleWriteSuccess(consoleSuccessMsg);
+                        // string consoleSuccessMsg = string.Format("Compiled {0} directory to {1}", selectedGametype.ToString(), compiledOutputPath);
+                        ConsoleWriteSuccess("Compiled {0} directory to {1}", selectedGametype.ToString(), compiledOutputPath);
 
                         return;
                     }
@@ -140,8 +140,8 @@ namespace bo2_gsc_cli {
                         // Write script buffer to file 
                         File.WriteAllBytes(compiledOutputPath, scriptBuffer);
 
-                        string consoleSuccessMsg = string.Format("Compiled {0} file to {1}", selectedGametype.ToString(), compiledOutputPath);
-                        ConsoleWriteSuccess(consoleSuccessMsg);
+                        // string consoleSuccessMsg = string.Format("Compiled {0} file to {1}", selectedGametype.ToString(), compiledOutputPath);
+                        ConsoleWriteSuccess("Compiled {0} file to {1}", selectedGametype.ToString(), compiledOutputPath);
 
                         return;
                     }
@@ -177,8 +177,8 @@ namespace bo2_gsc_cli {
                         byte[] scriptBuffer = CompileScript(selectedGametype, config, scriptTree);
                         InjectScript(PS3, selectedGametype, config, scriptBuffer);
 
-                        string consoleSuccessMsg = string.Format("{0} Directory injected ({1} bytes)", selectedGametype.ToString(), scriptBuffer.Length);
-                        ConsoleWriteSuccess(consoleSuccessMsg);
+                        // string consoleSuccessMsg = string.Format("{0} Directory injected ({1} bytes)", selectedGametype.ToString(), scriptBuffer.Length);
+                        ConsoleWriteSuccess("{0} Directory injected ({1} bytes)", selectedGametype.ToString(), scriptBuffer.Length);
 
                         return;
                     }
@@ -187,8 +187,8 @@ namespace bo2_gsc_cli {
                             byte[] scriptBuffer = File.ReadAllBytes(o.InjectPath);
                             InjectScript(PS3, selectedGametype, config, scriptBuffer);
 
-                            string consoleSuccessMsg = string.Format("{0} File injected ({1} bytes)", selectedGametype.ToString(), scriptBuffer.Length);
-                            ConsoleWriteSuccess(consoleSuccessMsg);
+                            // string consoleSuccessMsg = string.Format("{0} File injected ({1} bytes)", selectedGametype.ToString(), scriptBuffer.Length);
+                            ConsoleWriteSuccess("{0} File injected ({1} bytes)", selectedGametype.ToString(), scriptBuffer.Length);
 
                             return;
                         }
@@ -204,8 +204,8 @@ namespace bo2_gsc_cli {
                             byte[] scriptBuffer = CompileScript(selectedGametype, config, scriptTree);
 
                             InjectScript(PS3, selectedGametype, config, scriptBuffer);
-                            string consoleSuccessMsg = string.Format("{0} File injected ({1} bytes)", selectedGametype.ToString(), scriptBuffer.Length);
-                            ConsoleWriteSuccess(consoleSuccessMsg);
+                            // string consoleSuccessMsg = string.Format("{0} File injected ({1} bytes)", selectedGametype.ToString(), scriptBuffer.Length);
+                            ConsoleWriteSuccess("{0} File injected ({1} bytes)", selectedGametype.ToString(), scriptBuffer.Length);
 
                             return;
                         }
@@ -222,8 +222,8 @@ namespace bo2_gsc_cli {
         static bool PrintParseTreeErrors(ParseTree tree, string path) {
             if(tree.ParserMessages.Count > 0) { // ParseTree contains error messages 
                 LogMessage parserMsg = tree.ParserMessages[0];
-                string consoleErrorMsg = string.Format("Bad syntax at line {0} in {1}", parserMsg.Location.Line, path);
-                ConsoleWriteError(consoleErrorMsg);
+                // string consoleErrorMsg = string.Format("Bad syntax at line {0} in {1}", parserMsg.Location.Line, path);
+                ConsoleWriteError("Bad syntax at line {0} in {1}", parserMsg.Location.Line, path);
 
                 return true;
             }
@@ -303,8 +303,8 @@ namespace bo2_gsc_cli {
             try {
                 if(PS3.ConnectTarget()) {
                     if(PS3.AttachProcess()) {
-                        string msg = string.Format("Connected and attached to {0}", PS3.GetConsoleName());
-                        ConsoleWriteInfo(msg);
+                        // string msg = string.Format("Connected and attached to {0}", PS3.GetConsoleName());
+                        ConsoleWriteInfo("Connected and attached to {0}", PS3.GetConsoleName());
 
                         return true;
                     }
@@ -384,21 +384,21 @@ namespace bo2_gsc_cli {
                     return SelectAPI.ControlConsole;
             }
         }
-        static void ConsoleWriteError(string msg) {
+        static void ConsoleWriteError(string msg, params object[] parameters) {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("[ERROR] {0}", msg);
+            Console.WriteLine("[ERROR] {0}", msg, parameters);
             Console.ForegroundColor = ConsoleColor.White;
         }
 
-        static void ConsoleWriteInfo(string msg) {
+        static void ConsoleWriteInfo(string msg, params object[] parameters) {
             Console.ForegroundColor = ConsoleColor.Blue;
-            Console.WriteLine("[INFO] {0}", msg);
+            Console.WriteLine("[INFO] {0}", msg, parameters);
             Console.ForegroundColor = ConsoleColor.White;
         }
 
-        static void ConsoleWriteSuccess(string msg) {
+        static void ConsoleWriteSuccess(string msg, params object[] parameters) {
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("[SUCCESS] {0}", msg);
+            Console.WriteLine("[SUCCESS] {0}", msg, parameters);
             Console.ForegroundColor = ConsoleColor.White;
         }
     }
