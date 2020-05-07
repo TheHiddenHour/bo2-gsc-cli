@@ -383,19 +383,19 @@ namespace bo2_gsc_cli {
         }
         static void ConsoleWriteError(string msg, params object[] parameters) {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("[ERROR] {0}", msg, parameters);
+            Console.WriteLine("[ERROR] " + msg, parameters);
             Console.ForegroundColor = ConsoleColor.White;
         }
 
         static void ConsoleWriteInfo(string msg, params object[] parameters) {
             Console.ForegroundColor = ConsoleColor.Blue;
-            Console.WriteLine("[INFO] {0}", msg, parameters);
+            Console.WriteLine("[INFO] " + msg, parameters);
             Console.ForegroundColor = ConsoleColor.White;
         }
 
         static void ConsoleWriteSuccess(string msg, params object[] parameters) {
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("[SUCCESS] {0}", msg, parameters);
+            Console.WriteLine("[SUCCESS] " + msg, parameters);
             Console.ForegroundColor = ConsoleColor.White;
         }
     }
